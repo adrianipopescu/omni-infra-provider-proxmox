@@ -69,6 +69,11 @@ func (p *Provisioner) ProvisionSteps() []provision.Step[*resources.Machine] {
 				return err
 			}
 
+			strat, err := parseStrategy(data.PlacementStrategy)
+			if err != nil {
+				return err
+			}
+
 			nodes, err := p.proxmoxClient.Nodes(ctx)
 			if err != nil {
 				return err
@@ -115,6 +120,13 @@ func (p *Provisioner) ProvisionSteps() []provision.Step[*resources.Machine] {
 				ns.Name = node.Node
 				ns.MemoryFree = float64(node.MaxMem-node.Mem) / float64(node.MaxMem)
 
+				// FreeMem is unsigned; guard the subtraction in case Proxmox ever
+				// reports used memory above the node total.
+				// (hopefully that stray universal electron and caffeinated devs won't ever cause this)
+				if node.MaxMem > node.Mem {
+					ns.FreeMem = node.MaxMem - node.Mem
+				}
+
 				if inSet {
 					n, err := p.proxmoxClient.Node(ctx, node.Node)
 					if err != nil {
@@ -125,6 +137,8 @@ func (p *Provisioner) ProvisionSteps() []provision.Step[*resources.Machine] {
 					if err != nil {
 						return fmt.Errorf("failed to get vms for node %q, %w", node.Node, err)
 					}
+
+					ns.TotalVMs = len(vms)
 
 					for _, vm := range vms {
 						if vm.HasTag(machineRequestTagPrefix + machineRequestSet) {
@@ -144,7 +158,7 @@ func (p *Provisioner) ProvisionSteps() []provision.Step[*resources.Machine] {
 			var pickedNode nodeStatus
 
 			if inSet {
-				pickedNode = p.scheduler.pick(nodeInfoList, machineRequestSet, pctx.GetRequestID(), materialized)
+				pickedNode = p.scheduler.pick(nodeInfoList, machineRequestSet, pctx.GetRequestID(), data.Memory*1024*1024, strat, materialized)
 			} else {
 				pickedNode = pickNode(nodeInfoList)
 			}
@@ -865,7 +879,9 @@ func (p *Provisioner) waitForTaskToFinish(ctx context.Context, t *proxmox.Task) 
 type nodeStatus struct {
 	Name                     string
 	MemoryFree               float64
+	FreeMem                  uint64
 	SameMachineRequestSetVMs int
+	TotalVMs                 int
 }
 
 func pickNode(nodeInfoList []nodeStatus) nodeStatus {

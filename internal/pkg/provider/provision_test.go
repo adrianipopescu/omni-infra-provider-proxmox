@@ -188,7 +188,7 @@ func TestSchedulerSpreadsInFlightPlacements(t *testing.T) {
 	var picked []string
 
 	for _, requestID := range []string{"worker-1", "worker-2", "worker-3"} {
-		picked = append(picked, s.Pick(nodes(), talosWorkers, requestID, nil).Name)
+		picked = append(picked, s.Pick(nodes(), talosWorkers, requestID, 0, "spread", nil).Name)
 	}
 
 	require.ElementsMatch(t, []string{"node-a", "node-b", "node-c"}, picked)
@@ -204,10 +204,10 @@ func TestSchedulerReleasesMaterializedReservations(t *testing.T) {
 		}
 	}
 
-	require.Equal(t, "node-a", s.Pick(twoNodes(0), talosWorkers, "worker-1", nil).Name)
-	require.Equal(t, "node-b", s.Pick(twoNodes(0), talosWorkers, "worker-2", nil).Name)
+	require.Equal(t, "node-a", s.Pick(twoNodes(0), talosWorkers, "worker-1", 0, "spread", nil).Name)
+	require.Equal(t, "node-b", s.Pick(twoNodes(0), talosWorkers, "worker-2", 0, "spread", nil).Name)
 
-	picked := s.Pick(twoNodes(1), talosWorkers, "worker-3", map[string]struct{}{"worker-1": {}})
+	picked := s.Pick(twoNodes(1), talosWorkers, "worker-3", 0, "spread", map[string]struct{}{"worker-1": {}})
 
 	require.Equal(t, "node-a", picked.Name)
 }
@@ -223,9 +223,66 @@ func TestSchedulerExpiresStaleReservations(t *testing.T) {
 		}
 	}
 
-	require.Equal(t, "node-a", s.Pick(nodes(), talosWorkers, "worker-1", nil).Name)
+	require.Equal(t, "node-a", s.Pick(nodes(), talosWorkers, "worker-1", 0, "spread", nil).Name)
 
 	now = now.Add(2 * time.Minute)
 
-	require.Equal(t, "node-a", s.Pick(nodes(), talosWorkers, "worker-2", nil).Name)
+	require.Equal(t, "node-a", s.Pick(nodes(), talosWorkers, "worker-2", 0, "spread", nil).Name)
+}
+
+func TestSchedulerRoundRobinIgnoresMemory(t *testing.T) {
+	s := provider.NewScheduler()
+
+	// Memory order (c>b>a) is the inverse of name order, so a name-ordered
+	// result proves round-robin ignores free memory.
+	nodes := func() []provider.NodeStatus {
+		return []provider.NodeStatus{
+			{Name: "node-a", MemoryFree: 0.1},
+			{Name: "node-b", MemoryFree: 0.5},
+			{Name: "node-c", MemoryFree: 0.9},
+		}
+	}
+
+	var picked []string
+
+	for _, requestID := range []string{"worker-1", "worker-2", "worker-3"} {
+		picked = append(picked, s.Pick(nodes(), talosWorkers, requestID, 0, "round-robin", nil).Name)
+	}
+
+	require.Equal(t, []string{"node-a", "node-b", "node-c"}, picked)
+}
+
+func TestSchedulerFewerVMsBalancesTotalLoad(t *testing.T) {
+	s := provider.NewScheduler()
+
+	nodes := []provider.NodeStatus{
+		{Name: "node-a", TotalVMs: 9, SameMachineRequestSetVMs: 0, MemoryFree: 0.5},
+		{Name: "node-b", TotalVMs: 1, SameMachineRequestSetVMs: 3, MemoryFree: 0.5},
+	}
+
+	require.Equal(t, "node-b", s.Pick(nodes, talosWorkers, "worker-1", 0, "fewer-vms", nil).Name)
+}
+
+func TestSchedulerBinpackConsolidatesOntoNodesThatFit(t *testing.T) {
+	s := provider.NewScheduler()
+
+	nodes := func() []provider.NodeStatus {
+		return []provider.NodeStatus{
+			{Name: "node-a", FreeMem: 100},
+			{Name: "node-b", FreeMem: 50},
+		}
+	}
+
+	require.Equal(t, "node-b", s.Pick(nodes(), talosWorkers, "worker-1", 40, "binpack", nil).Name)
+	require.Equal(t, "node-a", s.Pick(nodes(), talosWorkers, "worker-2", 60, "binpack", nil).Name)
+}
+
+func TestParseStrategy(t *testing.T) {
+	for _, valid := range []string{"", "spread", "fewer-vms", "round-robin", "binpack"} {
+		_, err := provider.ParseStrategy(valid)
+		require.NoError(t, err)
+	}
+
+	_, err := provider.ParseStrategy("nonsense")
+	require.Error(t, err)
 }
