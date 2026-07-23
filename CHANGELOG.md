@@ -1,3 +1,84 @@
+## [Omni Infra Provider Proxmox 0.2.0](https://github.com/siderolabs/omni-infra-provider-proxmox/releases/tag/v0.2.0) (2026-07-23)
+
+Welcome to the v0.2.0 release of Omni Infra Provider Proxmox!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/omni-infra-provider-proxmox/issues.
+
+### Firmware Display Options
+
+Added options to control how machine firmware is displayed.
+
+
+### Bug Fixes and Improvements
+
+- Fixed the scheduler failing to release its reservation on deprovision.
+- Fixed node selection clumping onto a single node and causing OOM on non-exclusive Proxmox clusters.
+- Fixed ISO images not being re-downloaded when a prior download task failed.
+- Various dependency updates, including go-proxmox.
+
+
+### Proxmox HA Support
+
+Machines can now be registered with Proxmox HA, with the provider managing HA resources and resource-affinity rules for provisioning and teardown, including tolerating Proxmox rejecting an infeasible affinity rule.
+
+
+### Node Placement Strategies
+
+Added configurable placement strategies for node selection when provisioning machines across a Proxmox cluster, declared as an enum in the provider schema.
+
+
+### Add Versioning Support
+
+The infra provider will now report its version to Omni.
+
+
+### Contributors
+
+* netshad0w
+* Adrian Popescu
+* Artem Chernyshev
+* Edward Sammut Alessi
+* Mitch Ross
+
+### Changes
+<details><summary>17 commits</summary>
+<p>
+
+* [`9510c5a`](https://github.com/siderolabs/omni-infra-provider-proxmox/commit/9510c5a55f9c24684ca9023720912c422e88949c) feat: rekres and add versioning
+* [`fd21629`](https://github.com/siderolabs/omni-infra-provider-proxmox/commit/fd21629a87da0af2657613b137301c374d7c87d7) feat: add firmware display options
+* [`1c6b3bf`](https://github.com/siderolabs/omni-infra-provider-proxmox/commit/1c6b3bfd0380b7cbacd25fe744c07803b4c253b8) feat: declare placement_strategy in provider schema as enum
+* [`220dc87`](https://github.com/siderolabs/omni-infra-provider-proxmox/commit/220dc87bb08ba06b21622e4ad8df931cecdd0ee6) fix: defer placement_strategy parse and clamp memory math
+* [`a1c1814`](https://github.com/siderolabs/omni-infra-provider-proxmox/commit/a1c1814a49cd0a2162ddfb0bd33f97a4a9d15a16) feat: add placement strategies for node selection
+* [`1eadd18`](https://github.com/siderolabs/omni-infra-provider-proxmox/commit/1eadd18836e464d6db08903b13bdb5a2982dffca) fix: tolerate proxmox rejecting an infeasible resource-affinity rule
+* [`92255ee`](https://github.com/siderolabs/omni-infra-provider-proxmox/commit/92255ee180ffc0eb52650327fad89a678053a360) refactor: drop redundant ha config validation
+* [`e1b0959`](https://github.com/siderolabs/omni-infra-provider-proxmox/commit/e1b09594879deb15e2b213aa0afa1f377579f78e) test: add an HA-mode proxmox integration test pipeline
+* [`6dcb57a`](https://github.com/siderolabs/omni-infra-provider-proxmox/commit/6dcb57af5b678908388461a81e8106dd64710878) feat: provision and tear down proxmox HA from the machine class
+* [`559cf90`](https://github.com/siderolabs/omni-infra-provider-proxmox/commit/559cf9040fa3e53f8c8c2acf01f0e19a72214188) feat: add proxmox HA resource and affinity-rule manager
+* [`3ce2684`](https://github.com/siderolabs/omni-infra-provider-proxmox/commit/3ce2684788bc802b429eaa5cdd22549e8163d74d) feat: add ha_registered field to the machine spec
+* [`87a3a80`](https://github.com/siderolabs/omni-infra-provider-proxmox/commit/87a3a80393e9d82d98fd631b98f24fc67324b860) chore: bump go-proxmox to v0.7.1
+* [`8bcce21`](https://github.com/siderolabs/omni-infra-provider-proxmox/commit/8bcce21731897b3dca78eba5962fc750cd42c0a3) fix: release scheduler reservation on deprovision
+* [`346b9ec`](https://github.com/siderolabs/omni-infra-provider-proxmox/commit/346b9ec0922a586fba240573b2ea736544513f81) test: extract repeated node names and presize picked slice
+* [`22bb362`](https://github.com/siderolabs/omni-infra-provider-proxmox/commit/22bb362286435bb4b1c0c9792141b9b4686fcf30) fix: stop clumping one node into OOM on non-exclusive pmx clusters
+* [`4929213`](https://github.com/siderolabs/omni-infra-provider-proxmox/commit/4929213743fab2d6a9d72274f8f72381aac35284) fix: re-download the ISO image if detected that the task is failed
+* [`ade698e`](https://github.com/siderolabs/omni-infra-provider-proxmox/commit/ade698e58055963b3892b67d5ff2ff4b6bd74fda) feat: bump dependencies
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/cosi-project/runtime**            v1.14.1 -> v1.16.2
+* **github.com/google/cel-go**                   v0.28.0 -> v0.28.1
+* **github.com/luthermonson/go-proxmox**         v0.4.1 -> v0.7.1
+* **github.com/siderolabs/omni/client**          v1.6.5 -> 582730ce940c
+* **github.com/siderolabs/talos/pkg/machinery**  v1.13.0-beta.1 -> v1.14.0-alpha.2
+* **go.uber.org/zap**                            v1.27.1 -> v1.28.0
+* **go.yaml.in/yaml/v4**                         v4.0.0-rc.4 -> v4.0.0-rc.6
+
+Previous release can be found at [v0.1.0](https://github.com/siderolabs/omni-infra-provider-proxmox/releases/tag/v0.1.0)
+
 ## [Omni Proxmox Infra Provider 0.1.0](https://github.com/siderolabs/omni-infra-provider-proxmox/releases/tag/v0.1.0) (2026-05-22)
 
 Welcome to the v0.1.0 release of Omni Proxmox Infra Provider!

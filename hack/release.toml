@@ -1,6 +1,46 @@
 # commit to be tagged for the new release
 commit = "HEAD"
 
-project_name = "Omni Proxmox Infra Provider"
+project_name = "Omni Infra Provider Proxmox"
 github_repo = "siderolabs/omni-infra-provider-proxmox"
-match_deps = "^github.com/((talos-systems|siderolabs)/[a-zA-Z0-9-]+)$"
+match_deps = "^github.com/(siderolabs/[a-zA-Z0-9-]+)$"
+
+previous = "v0.1.0"
+pre_release = false
+
+[notes.versioning-support]
+title = "Add Versioning Support"
+description = """\
+The infra provider will now report its version to Omni.
+"""
+
+[notes.ha-support]
+title = "Proxmox HA Support"
+description = """\
+Machines can now be registered with Proxmox HA, with the provider managing \
+HA resources and resource-affinity rules for provisioning and teardown, \
+including tolerating Proxmox rejecting an infeasible affinity rule.
+"""
+
+[notes.placement-strategies]
+title = "Node Placement Strategies"
+description = """\
+Added configurable placement strategies for node selection when provisioning \
+machines across a Proxmox cluster, declared as an enum in the provider schema.
+"""
+
+[notes.firmware-options]
+title = "Firmware Display Options"
+description = """\
+Added options to control how machine firmware is displayed.
+"""
+
+[notes.fixes]
+title = "Bug Fixes and Improvements"
+description = """\
+- Fixed the scheduler failing to release its reservation on deprovision.
+- Fixed node selection clumping onto a single node and causing OOM on \
+non-exclusive Proxmox clusters.
+- Fixed ISO images not being re-downloaded when a prior download task failed.
+- Various dependency updates, including go-proxmox.
+"""
