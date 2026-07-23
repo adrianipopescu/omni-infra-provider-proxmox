@@ -28,6 +28,7 @@ import (
 	"github.com/siderolabs/omni-infra-provider-proxmox/internal/pkg/config"
 	"github.com/siderolabs/omni-infra-provider-proxmox/internal/pkg/provider"
 	"github.com/siderolabs/omni-infra-provider-proxmox/internal/pkg/provider/meta"
+	"github.com/siderolabs/omni-infra-provider-proxmox/internal/version"
 )
 
 //go:embed data/schema.json
@@ -126,7 +127,7 @@ var rootCmd = &cobra.Command{
 
 		return ip.Run(cmd.Context(), logger, infra.WithOmniEndpoint(cfg.omniAPIEndpoint), infra.WithClientOptions(
 			clientOptions...,
-		), infra.WithEncodeRequestIDsIntoTokens())
+		), infra.WithEncodeRequestIDsIntoTokens(), infra.WithVersion(version.Tag))
 	},
 }
 
