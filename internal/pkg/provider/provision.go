@@ -701,7 +701,17 @@ func (p *Provisioner) Deprovision(ctx context.Context, logger *zap.Logger, machi
 
 	vm, err := p.getVM(ctx, node, machine.TypedSpec().Value.Vmid)
 	if err != nil {
-		if strings.Contains(err.Error(), "does not exist") {
+		// The VM, or the node it was provisioned on, was removed out-of-band
+		// (directly in Proxmox). There is nothing left to tear down, so treat it
+		// as already deprovisioned and still clean up the pool.
+		if isAlreadyGoneErr(err) {
+			logger.Info("VM or its node no longer exists, treating as already deprovisioned",
+				zap.String("node", node), zap.Int32("vmid", machine.TypedSpec().Value.Vmid), zap.Error(err))
+
+			if pool := machine.TypedSpec().Value.Pool; pool != "" {
+				p.cleanupPool(ctx, logger, pool)
+			}
+
 			return nil
 		}
 
@@ -977,6 +987,35 @@ type nodeStatus struct {
 // shouldCountSetVMs disables the client-side set spread under HA, where Proxmox owns placement.
 func shouldCountSetVMs(data Data, hasSet bool) bool {
 	return hasSet && data.HA == nil
+}
+
+// isAlreadyGoneErr reports whether err means the VM, or the node it lived on,
+// no longer exists in Proxmox — e.g. it was deleted or the node was removed
+// out-of-band. On teardown such a machine has nothing left to clean up, so the
+// caller treats it as already deprovisioned instead of failing forever.
+//
+// go-proxmox flattens every 500 into errors.New(res.Status) with no type or
+// status code (proxmox.go handleResponse), so the reason phrase is the only
+// signal. The phrasings matched here are, respectively: a missing VM config
+// file, a node dropped from the cluster, and a node whose hostname no longer
+// resolves while Proxmox proxies the per-node request.
+func isAlreadyGoneErr(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	msg := err.Error()
+
+	switch {
+	case strings.Contains(msg, "does not exist"):
+		return true
+	case strings.Contains(msg, "no such node"):
+		return true
+	case strings.Contains(msg, "hostname lookup") && strings.Contains(msg, "failed to get address info"):
+		return true
+	default:
+		return false
+	}
 }
 
 func pickNode(nodeInfoList []nodeStatus) nodeStatus {

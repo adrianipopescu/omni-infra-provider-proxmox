@@ -222,11 +222,22 @@ func (m *Manager) FindVMNode(ctx context.Context, vmid int32) (string, bool, err
 
 		node, err := m.px.Node(ctx, ns.Node)
 		if err != nil {
+			// A node removed or unreachable out-of-band must not abort the scan:
+			// the VM we are looking for may live on another node, and blocking
+			// here would wedge teardown of every HA machine. Skip it.
+			if isNodeUnreachable(err) {
+				continue
+			}
+
 			return "", false, fmt.Errorf("failed to get node %q: %w", ns.Node, err)
 		}
 
 		vms, err := node.VirtualMachines(ctx)
 		if err != nil {
+			if isNodeUnreachable(err) {
+				continue
+			}
+
 			return "", false, fmt.Errorf("failed to list vms on %q: %w", ns.Node, err)
 		}
 
@@ -238,6 +249,22 @@ func (m *Manager) FindVMNode(ctx context.Context, vmid int32) (string, bool, err
 	}
 
 	return "", false, nil
+}
+
+// isNodeUnreachable reports whether err is Proxmox failing to reach or resolve a
+// cluster node while proxying a per-node request (a node removed or offline
+// out-of-band). go-proxmox surfaces these only as the raw 500 reason phrase, so
+// the string is the only contract. Matching the same shapes classify handles
+// for HA resources, but for the node-proxy layer instead.
+func isNodeUnreachable(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	msg := err.Error()
+
+	return strings.Contains(msg, "no such node") ||
+		(strings.Contains(msg, "hostname lookup") && strings.Contains(msg, "failed to get address info"))
 }
 
 // ensureNodeAffinity creates the node-affinity rule with sid as a member, or
