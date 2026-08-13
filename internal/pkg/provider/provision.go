@@ -601,6 +601,8 @@ func (p *Provisioner) ProvisionSteps() []provision.Step[*resources.Machine] {
 				})
 			}
 
+			vmOptions = append(vmOptions, buildUSBDeviceOptions(data.USBDevices)...)
+
 			task, err := node.NewVirtualMachine(ctx, vmid, vmOptions...)
 			if err != nil {
 				return err
@@ -727,7 +729,7 @@ func (p *Provisioner) Deprovision(ctx context.Context, logger *zap.Logger, machi
 		return err
 	}
 
-	task, err = vm.Delete(ctx)
+	task, err = vm.Delete(ctx, nil)
 	if err != nil {
 		return err
 	}
@@ -757,6 +759,24 @@ func buildTagsOption(userTags []string, machineRequestSet string) (string, bool)
 	}
 
 	return strings.Join(tags, ";"), true
+}
+
+func buildUSBDeviceOptions(devices []USBDevice) []proxmox.VirtualMachineOption {
+	options := make([]proxmox.VirtualMachineOption, 0, len(devices))
+
+	for i, device := range devices {
+		parts := []string{fmt.Sprintf("mapping=%s", device.Mapping)}
+		if device.USB3 {
+			parts = append(parts, "usb3=1")
+		}
+
+		options = append(options, proxmox.VirtualMachineOption{
+			Name:  fmt.Sprintf("usb%d", i),
+			Value: strings.Join(parts, ","),
+		})
+	}
+
+	return options
 }
 
 func buildFirmwareOptions(data Data, selectedStorage string) []proxmox.VirtualMachineOption {

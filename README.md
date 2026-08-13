@@ -125,6 +125,24 @@ config:
 
 Replace `"local-lvm"` with the name of the storage you want to use for VM disks in your Proxmox cluster.
 
+### USB Device Passthrough
+
+USB devices can be attached through Proxmox Resource Mappings.
+Define the mapping under **Datacenter → Resource Mappings → USB Devices**, then reference its name in the machine class:
+
+```yaml
+config:
+  ...
+  usb_devices:
+    - mapping: rtl-sdr
+      usb3: true
+    - mapping: zigbee-controller
+```
+
+Devices are assigned to `usb0`, `usb1`, and subsequent slots in list order.
+When a machine can run on multiple Proxmox nodes, define each mapping on every
+eligible node.
+
 ### High Availability
 
 Adding an `ha:` block to the machine class registers each provisioned VM as a Proxmox HA resource

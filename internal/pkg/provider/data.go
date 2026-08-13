@@ -31,6 +31,7 @@ type Data struct {
 	AdditionalDisks   []AdditionalDisk `yaml:"additional_disks,omitempty"`
 	AdditionalNICs    []AdditionalNIC  `yaml:"additional_nics,omitempty"`
 	PCIDevices        []PCIDevice      `yaml:"pci_devices,omitempty"`
+	USBDevices        []USBDevice      `yaml:"usb_devices,omitempty"`
 	Tags              []string         `yaml:"tags,omitempty"`
 	Vlan              uint64           `yaml:"vlan"`
 	Memory            uint64           `yaml:"memory"`
@@ -61,6 +62,12 @@ type PCIDevice struct {
 	PCIExpress bool   `yaml:"pcie,omitempty"`        // Use PCIe instead of PCI (recommended for GPUs)
 	PrimaryGPU bool   `yaml:"primary_gpu,omitempty"` // Set as primary GPU (x-vga=1)
 	ROMBar     bool   `yaml:"rombar,omitempty"`      // Enable ROM BAR (default true, set false to disable)
+}
+
+// USBDevice represents a USB device passthrough configuration using Proxmox Resource Mappings.
+type USBDevice struct {
+	Mapping string `yaml:"mapping"`        // Resource mapping name (e.g., rtl-sdr)
+	USB3    bool   `yaml:"usb3,omitempty"` // Use the USB 3 controller
 }
 
 // AdditionalNIC represents an additional network interface configuration.

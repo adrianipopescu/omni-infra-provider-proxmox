@@ -379,3 +379,15 @@ func TestBuildFirmwareOptions(t *testing.T) {
 		})
 	}
 }
+
+func TestBuildUSBDeviceOptions(t *testing.T) {
+	devices := []provider.USBDevice{
+		{Mapping: "rtl-sdr", USB3: true},
+		{Mapping: "zigbee-controller"},
+	}
+
+	require.Equal(t, map[string]any{
+		"usb0": "mapping=rtl-sdr,usb3=1",
+		"usb1": "mapping=zigbee-controller",
+	}, provider.BuildUSBDeviceOptions(devices))
+}

@@ -27,6 +27,17 @@ func BuildFirmwareOptions(data Data, selectedStorage string) map[string]any {
 	return result
 }
 
+func BuildUSBDeviceOptions(devices []USBDevice) map[string]any {
+	options := buildUSBDeviceOptions(devices)
+
+	result := map[string]any{}
+	for _, option := range options {
+		result[option.Name] = option.Value
+	}
+
+	return result
+}
+
 func PoolCreateDecision(exists bool, poolID, machineRequestSet string) (bool, error) {
 	return poolCreateDecision(exists, poolID, machineRequestSet)
 }

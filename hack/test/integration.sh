@@ -9,6 +9,8 @@ mkdir -p "${TMP}"
 
 TALOS_VERSION=1.13.2
 OMNI_VERSION=${OMNI_VERSION:-latest}
+OMNI_IMAGE="ghcr.io/siderolabs/omni:${OMNI_VERSION}"
+OMNI_INTEGRATION_TEST_IMAGE="ghcr.io/siderolabs/omni-integration-test:${OMNI_VERSION}"
 K8S_VERSION="${K8S_VERSION:-1.35.0}"
 
 ARTIFACTS=_out
@@ -40,7 +42,15 @@ mkdir -p ${ARTIFACTS}
 
 OMNICTL="${TMP}/omnictl"
 
-curl -Lo ${OMNICTL} $(curl https://api.github.com/repos/siderolabs/omni/releases/latest  |  jq -r '.assets[] | select(.name | contains ("omnictl-linux-amd64")) | .browser_download_url')
+# omnictl refuses to talk to a backend with a different API version, so take it out of the
+# Omni image under test rather than from the latest Omni release: ghcr.io/siderolabs/omni:latest
+# is built from main and can be several API versions ahead of the last tagged release.
+docker pull ${OMNI_IMAGE}
+
+OMNICTL_CONTAINER=$(docker create ${OMNI_IMAGE})
+docker cp ${OMNICTL_CONTAINER}:/omnictl/omnictl-linux-amd64 ${OMNICTL}
+docker rm -v ${OMNICTL_CONTAINER}
+
 chmod +x ${OMNICTL}
 
 # Build registry mirror args.
@@ -123,7 +133,7 @@ docker run -it -d --network host -v ./hack/certs:/certs \
     -e VAULT_TOKEN=dev-o-token \
     -e VAULT_ADDR='http://127.0.0.1:8200' \
     --name omni \
-    ghcr.io/siderolabs/omni:${OMNI_VERSION} \
+    ${OMNI_IMAGE} \
     --siderolink-wireguard-advertised-addr ${DOCKER_GATEWAY}:50180 \
     --siderolink-api-advertised-url "grpc://${DOCKER_GATEWAY}:8090" \
     --machine-api-bind-addr 0.0.0.0:8090 \
@@ -339,7 +349,7 @@ docker run \
   -e SSL_CERT_DIR=/etc/ssl/certs \
   -e OMNI_SERVICE_ACCOUNT_KEY=$(docker run --rm --volumes-from omni alpine cat /_out/key) \
   --network host \
-  ghcr.io/siderolabs/omni-integration-test:${OMNI_VERSION} \
+  ${OMNI_INTEGRATION_TEST_IMAGE} \
   --omni.endpoint https://localhost:8099 \
   --omni.talos-version=${TALOS_VERSION} \
   --test.run "TestIntegration/Suites/(ScaleUpAndDownAutoProvisionMachineSets)" \

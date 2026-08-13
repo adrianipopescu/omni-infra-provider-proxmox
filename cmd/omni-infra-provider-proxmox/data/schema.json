@@ -227,6 +227,28 @@
         ]
       }
     },
+    "usb_devices": {
+      "type": "array",
+      "maxItems": 15,
+      "description": "USB devices to pass through using Proxmox Resource Mappings (usb0, usb1, etc.)",
+      "items": {
+        "type": "object",
+        "properties": {
+          "mapping": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Proxmox USB Resource Mapping name (e.g., rtl-sdr)"
+          },
+          "usb3": {
+            "type": "boolean",
+            "description": "Attach the device to the USB 3 controller"
+          }
+        },
+        "required": [
+          "mapping"
+        ]
+      }
+    },
     "pci_devices": {
       "type": "array",
       "description": "PCI devices to pass through using Proxmox Resource Mappings",
