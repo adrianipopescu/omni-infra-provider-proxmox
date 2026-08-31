@@ -1,6 +1,6 @@
 module github.com/siderolabs/omni-infra-provider-proxmox
 
-go 1.26.6
+go 1.26.7
 
 require (
 	github.com/cosi-project/runtime v1.16.2
@@ -8,10 +8,10 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/luthermonson/go-proxmox v0.8.1
 	github.com/planetscale/vtprotobuf v0.6.1-0.20260702190614-8ae5a48058df
-	github.com/siderolabs/omni/client v1.10.4
-	github.com/siderolabs/talos/pkg/machinery v1.14.0-rc.1
+	github.com/siderolabs/omni/client v1.10.0-beta.0.0.20260829003502-b1341200b16d
+	github.com/siderolabs/talos/pkg/machinery v1.14.0-rc.2.0.20260825161121-322de8bf2974
 	github.com/spf13/cobra v1.10.2
-	github.com/stretchr/testify v1.11.1
+	github.com/stretchr/testify v1.12.1
 	go.uber.org/zap v1.28.0
 	go.yaml.in/yaml/v4 v4.0.0-rc.6.0.20260809190231-643e93b9c9be
 	google.golang.org/protobuf v1.36.12
@@ -54,7 +54,7 @@ require (
 	github.com/go-openapi/swag/yamlutils v0.29.0 // indirect
 	github.com/google/gnostic-models v0.7.1 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
-	github.com/google/go-containerregistry v0.21.9 // indirect
+	github.com/google/go-containerregistry v0.22.0 // indirect
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.30.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
@@ -79,14 +79,13 @@ require (
 	github.com/opencontainers/runtime-spec v1.3.0 // indirect
 	github.com/petermattis/goid v0.0.0-20260820044319-269ab09b5261 // indirect
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c // indirect
-	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/ryanuber/go-glob v1.0.0 // indirect
 	github.com/sasha-s/go-deadlock v0.3.9 // indirect
 	github.com/siderolabs/crypto v0.6.5 // indirect
 	github.com/siderolabs/gen v0.8.7 // indirect
 	github.com/siderolabs/go-api-signature v0.3.13 // indirect
 	github.com/siderolabs/go-pointer v1.0.1 // indirect
-	github.com/siderolabs/image-factory v1.5.0 // indirect
+	github.com/siderolabs/image-factory v1.6.0 // indirect
 	github.com/siderolabs/net v0.4.0 // indirect
 	github.com/siderolabs/proto-codec v0.1.4 // indirect
 	github.com/siderolabs/protoenc v0.2.4 // indirect
@@ -112,14 +111,13 @@ require (
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20241231184526-a9ab2273dd10 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260819154853-08b0e4226688 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260819154853-08b0e4226688 // indirect
-	google.golang.org/grpc v1.83.1 // indirect
+	google.golang.org/grpc v1.83.2 // indirect
 	gopkg.in/evanphx/json-patch.v4 v4.13.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/api v0.38.0-alpha.0 // indirect
-	k8s.io/apimachinery v0.38.0-alpha.0 // indirect
-	k8s.io/cli-runtime v0.36.4 // indirect
-	k8s.io/client-go v0.38.0-alpha.0 // indirect
+	k8s.io/api v0.37.0 // indirect
+	k8s.io/apimachinery v0.37.0 // indirect
+	k8s.io/cli-runtime v0.37.0 // indirect
+	k8s.io/client-go v0.37.0 // indirect
 	k8s.io/klog/v2 v2.140.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20260821135717-be32def86098 // indirect
 	k8s.io/utils v0.0.0-20260707023825-cf1189d6abe3 // indirect

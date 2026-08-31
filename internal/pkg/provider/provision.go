@@ -8,11 +8,8 @@ package provider
 import (
 	"cmp"
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"errors"
 	"fmt"
-	"net/url"
 	"slices"
 	"strings"
 	"sync"
@@ -21,7 +18,7 @@ import (
 	"github.com/google/cel-go/cel"
 	"github.com/google/uuid"
 	"github.com/luthermonson/go-proxmox"
-	"github.com/siderolabs/omni/client/pkg/constants"
+	"github.com/siderolabs/omni/client/pkg/imagefactory"
 	"github.com/siderolabs/omni/client/pkg/infra/provision"
 	"github.com/siderolabs/omni/client/pkg/omni/resources/infra"
 	siderocel "github.com/siderolabs/talos/pkg/machinery/cel"
@@ -174,21 +171,6 @@ func (p *Provisioner) ProvisionSteps() []provision.Step[*resources.Machine] {
 
 			return nil
 		}),
-		provision.NewStep("createSchematic", func(ctx context.Context, logger *zap.Logger, pctx provision.Context[*resources.Machine]) error {
-			// generating schematic with join configs as it's going to be used in the ISO image which doesn't support partial configs
-			schematic, err := pctx.GenerateSchematicID(
-				ctx, logger,
-				provision.WithExtraExtensions("siderolabs/qemu-guest-agent"),
-				provision.WithoutConnectionParams(),
-			)
-			if err != nil {
-				return err
-			}
-
-			pctx.State.TypedSpec().Value.Schematic = schematic
-
-			return nil
-		}),
 		provision.NewStep("uploadISO", func(ctx context.Context, logger *zap.Logger, pctx provision.Context[*resources.Machine]) error {
 			if pctx.State.TypedSpec().Value.VolumeUploadTask != "" {
 				err := p.checkTaskStatus(ctx, pctx.State.TypedSpec().Value.VolumeUploadTask)
@@ -205,32 +187,32 @@ func (p *Provisioner) ProvisionSteps() []provision.Step[*resources.Machine] {
 
 			pctx.State.TypedSpec().Value.TalosVersion = pctx.GetTalosVersion()
 
-			url, err := url.Parse(constants.ImageFactoryBaseURL)
-			if err != nil {
-				return err
-			}
-
 			var data Data
 
-			err = pctx.UnmarshalProviderData(&data)
+			err := pctx.UnmarshalProviderData(&data)
 			if err != nil {
 				return err
 			}
 
-			url = url.JoinPath(
-				"image",
-				pctx.State.TypedSpec().Value.Schematic,
-				pctx.GetTalosVersion(),
-				"nocloud-amd64.iso",
+			media, err := pctx.EnsureInstallationMedia(
+				ctx, logger, provision.MediaSpec{
+					MediaSpec: imagefactory.MediaSpec{
+						Kind:         imagefactory.InstallationMediaKindISO,
+						Platform:     "nocloud",
+						Architecture: "amd64",
+					},
+					StandaloneURL: true,
+				},
+				provision.WithExtraExtensions("siderolabs/qemu-guest-agent"),
+				provision.WithoutConnectionParams(),
 			)
-
-			hash := sha256.New()
-
-			if _, err = hash.Write([]byte(url.String())); err != nil {
-				return err
+			if err != nil {
+				return provision.NewRetryErrorf(time.Second*10, "error resolving the installation media: %w", err)
 			}
 
-			isoName := hex.EncodeToString(hash.Sum(nil)) + ".iso"
+			pctx.State.TypedSpec().Value.Schematic = media.SchematicID
+
+			isoName := media.StorageKey + ".iso"
 
 			pctx.State.TypedSpec().Value.VolumeId = isoName
 
@@ -277,7 +259,7 @@ func (p *Provisioner) ProvisionSteps() []provision.Step[*resources.Machine] {
 				delete(p.pendingISODownloads, isoUploadID)
 			}
 
-			task, err := storage.DownloadURL(ctx, "iso", isoName, url.String())
+			task, err := storage.DownloadURL(ctx, "iso", isoName, media.URL)
 			if err != nil {
 				return err
 			}
